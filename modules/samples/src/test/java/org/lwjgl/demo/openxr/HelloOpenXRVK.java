@@ -47,8 +47,6 @@ public class HelloOpenXRVK {
         static final int NUM_INDICES = NUM_CUBES * 6 * 6;
     }
 
-    //private static final int DEPTH_FORMAT = VK_FORMAT_D32_SFLOAT;
-
     private static class SwapchainImage {
         final long colorImage;
         final long colorImageView;
