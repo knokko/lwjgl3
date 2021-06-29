@@ -4,12 +4,18 @@
  */
 package org.lwjgl.openxr;
 
-import org.lwjgl.glfw.*;
 import org.lwjgl.system.*;
+import org.lwjgl.system.linux.*;
 import org.lwjgl.system.windows.*;
 
 import java.nio.*;
 
+import static org.lwjgl.glfw.GLFWNativeGLX.*;
+import static org.lwjgl.glfw.GLFWNativeWGL.*;
+import static org.lwjgl.glfw.GLFWNativeWayland.*;
+import static org.lwjgl.glfw.GLFWNativeWin32.*;
+import static org.lwjgl.glfw.GLFWNativeX11.*;
+import static org.lwjgl.opengl.GLX13.*;
 import static org.lwjgl.openxr.XR10.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -119,12 +125,21 @@ public class XRHelper {
     }
 
     /**
+     * <p>
      * Allocates a <b>XrGraphicsBindingOpenGL**</b> struct for the current platform onto the given stack. It should
      * be included in the next-chain of the {@link XrSessionCreateInfo} that will be used to create an
      * OpenXR session with OpenGL rendering. (Every platform requires a different OpenGL graphics binding
      * struct, so this method spares users the trouble of working with all these cases themselves.)
+     * </p>
      *
+     * <p>
      * Note: {@link XR10#xrCreateSession} must be called <b>before</b> the given stack is dropped!
+     * </p>
+     *
+     * <p>
+     * Note: Linux support is not finished, so only Windows works at the moment. This should be fixed in the
+     * future. Until then, Vulkan is the only cross-platform rendering API for the OpenXR Java bindings.
+     * </p>
      * @param stack The stack onto which to allocate the graphics binding struct
      * @param window The GLFW window handle used to create the OpenGL context
      * @return A XrGraphicsBindingOpenGL** struct that can be used to create a session
@@ -133,37 +148,79 @@ public class XRHelper {
     public static Struct createGraphicsBindingOpenGL(MemoryStack stack, long window) throws IllegalStateException {
         switch (Platform.get()) {
             case LINUX:
-//                    if (xlib) { TODO
-//                        XrGraphicsBindingOpenGLXlibKHR graphicsBinding = XrGraphicsBindingOpenGLXlibKHR.malloc();
-//                        graphicsBinding.set(
-//                            KHROpenglEnable.XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR,
-//                            NULL,
-//                            GLFWNativeX11.glfwGetX11Display(),
-//                            ,
-//                            ,
-//                            GLX.glXGetCurrentDrawable(),
-//                            GLFWNativeGLX.glfwGetGLXContext(window)
-//                        );
-//                        this.graphicsBinding = graphicsBinding;
-//                    } else if (wayland) {
-//                        XrGraphicsBindingOpenGLWaylandKHR graphicsBinding = XrGraphicsBindingOpenGLWaylandKHR.malloc();
-//                        graphicsBinding.set(
-//                            KHROpenglEnable.XR_TYPE_GRAPHICS_BINDING_OPENGL_WAYLAND_KHR,
-//                            NULL,
-//                            GLFWNativeWayland.glfwGetWaylandDisplay()
-//                        );
-//                        this.graphicsBinding = graphicsBinding;
-//                    } else {
-//                        throw new IllegalStateException();
-//                    }
-                throw new IllegalStateException("Linux support is work in progress");
+
+                // Test which windowing system is used
+                boolean supportsWayland = false;
+                boolean supportsX11 = false;
+                try {
+                    glfwGetWaylandDisplay();
+                    supportsWayland = true;
+                } catch (ExceptionInInitializerError noWayland) {
+                    // I don't know a better way to test this
+                }
+                try {
+                    glfwGetX11Display();
+                    supportsX11 = true;
+                } catch (ExceptionInInitializerError noX11) {
+                    // I don't know a better way to test this
+                }
+
+                /*
+                 * NOTE: X11 is preferred over Wayland because Monado, the most promising Linux OpenXR runtime,
+                 * doesn't handle XrGraphicsBindingOpenGLWaylandKHR at the moment. See
+                 * https://gitlab.freedesktop.org/monado/monado/-/issues/128 for the current status on this.
+                 */
+                if (supportsX11) {
+                    XrGraphicsBindingOpenGLXlibKHR graphicsBinding = XrGraphicsBindingOpenGLXlibKHR.mallocStack(stack);
+                    long display = glfwGetX11Display();
+
+                    /*
+                     * To continue, we need the GLXFBConfig that was used to create the GLFW window. Unfortunately,
+                     * GLFW doesn't expose this to us. I created a pull request for this:
+                     * https://github.com/glfw/glfw/pull/1925
+                     * Linux X11 support will be blocked until it is merged. When it is merged, the GLFW bindings of
+                     * GLFW will need to be updated as well.
+                     */
+                    long glxConfig = -1;
+                    // long glxConfig = glfwGetGLXFBConfig();
+
+                    if (glxConfig == -1) {
+                        throw new IllegalStateException("Linux X11 support is not finished");
+                    }
+
+                    XVisualInfo visualInfo = glXGetVisualFromFBConfig(display, glxConfig);
+                    if (visualInfo == null) {
+                        throw new IllegalStateException("Failed to get visual info");
+                    }
+                    long visualid = visualInfo.visualid();
+                    graphicsBinding.set(
+                        KHROpenglEnable.XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR,
+                        NULL,
+                        display,
+                        (int) visualid,
+                        glxConfig,
+                        glXGetCurrentDrawable(),
+                        glfwGetGLXContext(window)
+                    );
+                    return graphicsBinding;
+                } else if (supportsWayland) {
+                    XrGraphicsBindingOpenGLWaylandKHR graphicsBinding = XrGraphicsBindingOpenGLWaylandKHR.mallocStack(stack);
+                    graphicsBinding.set(
+                        KHROpenglEnable.XR_TYPE_GRAPHICS_BINDING_OPENGL_WAYLAND_KHR,
+                        NULL,
+                        glfwGetWaylandDisplay()
+                    );
+                    return graphicsBinding;
+                } else {
+                    throw new IllegalStateException("Unsupported Linux windowing system. Only X11 and Wayland are supported");
+                }
             case WINDOWS:
                 XrGraphicsBindingOpenGLWin32KHR winGraphicsBinding = XrGraphicsBindingOpenGLWin32KHR.mallocStack(stack);
                 winGraphicsBinding.set(
                     KHROpenglEnable.XR_TYPE_GRAPHICS_BINDING_OPENGL_WIN32_KHR,
                     NULL,
-                    User32.GetDC(GLFWNativeWin32.glfwGetWin32Window(window)),
-                    GLFWNativeWGL.glfwGetWGLContext(window)
+                    User32.GetDC(glfwGetWin32Window(window)),
+                    glfwGetWGLContext(window)
                 );
                 return winGraphicsBinding;
             default:
