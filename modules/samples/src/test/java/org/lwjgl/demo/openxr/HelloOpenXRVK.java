@@ -1823,7 +1823,8 @@ public class HelloOpenXRVK {
     private void loopXrSession() {
 
         // This is a safety check for debugging. Set to 0 to disable this.
-        long endTime = System.currentTimeMillis() + 10_000;
+//        long endTime = System.currentTimeMillis() + 10_000;
+        long endTime = 0;
 
         boolean startedSession = false;
 
