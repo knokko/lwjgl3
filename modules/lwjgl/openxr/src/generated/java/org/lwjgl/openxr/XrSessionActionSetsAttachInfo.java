@@ -272,7 +272,6 @@ public class XrSessionActionSetsAttachInfo extends Struct implements NativeResou
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrSessionActionSetsAttachInfo.NEXT));
         check(memGetAddress(struct + XrSessionActionSetsAttachInfo.ACTIONSETS));
     }
 

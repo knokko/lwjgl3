@@ -258,7 +258,7 @@ public class XrEventDataBuffer extends Struct implements NativeResource {
     /** Unsafe version of {@link #type(int) type}. */
     public static void ntype(long struct, int value) { UNSAFE.putInt(null, struct + XrEventDataBuffer.TYPE, value); }
     /** Unsafe version of {@link #next(long) next}. */
-    public static void nnext(long struct, long value) { memPutAddress(struct + XrEventDataBuffer.NEXT, check(value)); }
+    public static void nnext(long struct, long value) { memPutAddress(struct + XrEventDataBuffer.NEXT, value); }
     /** Unsafe version of {@link #varying(ByteBuffer) varying}. */
     public static void nvarying(long struct, ByteBuffer value) {
         if (CHECKS) { checkGT(value, 4000); }

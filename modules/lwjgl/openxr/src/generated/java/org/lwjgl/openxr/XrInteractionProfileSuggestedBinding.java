@@ -287,7 +287,6 @@ public class XrInteractionProfileSuggestedBinding extends Struct implements Nati
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrInteractionProfileSuggestedBinding.NEXT));
         int countSuggestedBindings = ncountSuggestedBindings(struct);
         long suggestedBindings = memGetAddress(struct + XrInteractionProfileSuggestedBinding.SUGGESTEDBINDINGS);
         check(suggestedBindings);

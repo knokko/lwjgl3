@@ -291,7 +291,6 @@ public class XrActionSpaceCreateInfo extends Struct implements NativeResource {
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrActionSpaceCreateInfo.NEXT));
         check(memGetAddress(struct + XrActionSpaceCreateInfo.ACTION));
     }
 

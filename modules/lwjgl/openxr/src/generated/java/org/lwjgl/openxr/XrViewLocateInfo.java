@@ -297,7 +297,6 @@ public class XrViewLocateInfo extends Struct implements NativeResource {
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrViewLocateInfo.NEXT));
         check(memGetAddress(struct + XrViewLocateInfo.SPACE));
     }
 

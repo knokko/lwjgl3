@@ -259,7 +259,6 @@ public class XrSwapchainImageWaitInfo extends Struct implements NativeResource {
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrSwapchainImageWaitInfo.NEXT));
     }
 
     // -----------------------------------

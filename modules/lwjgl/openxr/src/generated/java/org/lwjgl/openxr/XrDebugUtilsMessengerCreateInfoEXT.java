@@ -328,7 +328,6 @@ public class XrDebugUtilsMessengerCreateInfoEXT extends Struct implements Native
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrDebugUtilsMessengerCreateInfoEXT.NEXT));
         check(memGetAddress(struct + XrDebugUtilsMessengerCreateInfoEXT.USERCALLBACK));
     }
 

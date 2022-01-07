@@ -381,7 +381,6 @@ public class XrSwapchainCreateInfo extends Struct implements NativeResource {
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrSwapchainCreateInfo.NEXT));
     }
 
     // -----------------------------------

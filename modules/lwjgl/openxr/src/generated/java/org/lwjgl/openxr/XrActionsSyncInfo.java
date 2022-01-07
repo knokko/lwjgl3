@@ -276,7 +276,6 @@ public class XrActionsSyncInfo extends Struct implements NativeResource {
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrActionsSyncInfo.NEXT));
     }
 
     // -----------------------------------

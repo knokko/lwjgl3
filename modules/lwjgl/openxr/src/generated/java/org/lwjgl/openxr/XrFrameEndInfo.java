@@ -307,7 +307,6 @@ public class XrFrameEndInfo extends Struct implements NativeResource {
      * @param struct the struct to validate
      */
     public static void validate(long struct) {
-        check(memGetAddress(struct + XrFrameEndInfo.NEXT));
     }
 
     // -----------------------------------
