@@ -143,10 +143,6 @@ public class HelloOpenXRVK {
     }
 
     public static void main(String[] args) {
-        System.out.println("main1");
-        //XR.create();
-        System.out.println("main2");
-
         HelloOpenXRVK classInstance = new HelloOpenXRVK();
         classInstance.start();
     }
@@ -264,7 +260,7 @@ public class HelloOpenXRVK {
                 throw new IllegalStateException("OpenXR library does not provide required extension: " + KHRVulkanEnable.XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
             }
 
-            XrApplicationInfo applicationInfo = XrApplicationInfo.malloc();
+            XrApplicationInfo applicationInfo = XrApplicationInfo.malloc(stack);
             applicationInfo.apiVersion(XR10.XR_CURRENT_API_VERSION);
             applicationInfo.applicationName(stack.UTF8("DummyXRVK"));
 
@@ -287,7 +283,7 @@ public class HelloOpenXRVK {
                 wantedLayers = null;
             }
 
-            XrInstanceCreateInfo createInfo = XrInstanceCreateInfo.malloc();
+            XrInstanceCreateInfo createInfo = XrInstanceCreateInfo.malloc(stack);
             createInfo.set(
                 XR10.XR_TYPE_INSTANCE_CREATE_INFO,
                 0,
