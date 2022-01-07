@@ -135,7 +135,11 @@ public final class XR {
         private long getFunctionAddress(String name) { return getFunctionAddress(name, true); }
         private long getFunctionAddress(String name, boolean required) {
             try (MemoryStack stack = stackPush()) {
-                long address = callPPP(NULL, memAddress(stack.ASCII(name)), xrGetInstanceProcAddr);
+
+                PointerBuffer pp = stack.mallocPointer(1);
+                callPPPI(NULL, memAddress(stack.ASCII(name)), memAddress(pp), xrGetInstanceProcAddr);
+                long address = pp.get();
+
                 if (address == NULL && required) {
                     throw new IllegalArgumentException("A critical function is missing. Make sure that OpenXR is available.");
                 }
@@ -164,7 +168,7 @@ public final class XR {
                 maxMinor = min(minorVersion, maxMinor);
             }
             for (int m = 0; m <= maxMinor; m++) {
-                enabledExtensions.add(String.format("Vulkan%d%d", M, m));
+                enabledExtensions.add(String.format("OpenXR%d%d", M, m));
             }
         }
 
