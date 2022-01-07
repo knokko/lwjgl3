@@ -549,6 +549,7 @@
         <compileBinding binding="openxr">
             <classpath>
                 <pathelement path="${bin.lwjgl}/egl"/>
+                <pathelement path="${bin.lwjgl}/glfw"/>
                 <pathelement path="${bin.lwjgl}/opengl"/>
                 <pathelement path="${bin.lwjgl}/vulkan"/>
             </classpath>
