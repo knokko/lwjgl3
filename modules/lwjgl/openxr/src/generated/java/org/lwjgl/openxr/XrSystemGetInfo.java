@@ -254,7 +254,7 @@ public class XrSystemGetInfo extends Struct implements NativeResource {
     /** Unsafe version of {@link #type(int) type}. */
     public static void ntype(long struct, int value) { UNSAFE.putInt(null, struct + XrSystemGetInfo.TYPE, value); }
     /** Unsafe version of {@link #next(long) next}. */
-    public static void nnext(long struct, long value) { memPutAddress(struct + XrSystemGetInfo.NEXT, check(value)); }
+    public static void nnext(long struct, long value) { memPutAddress(struct + XrSystemGetInfo.NEXT, value); }
     /** Unsafe version of {@link #formFactor(int) formFactor}. */
     public static void nformFactor(long struct, int value) { UNSAFE.putInt(null, struct + XrSystemGetInfo.FORMFACTOR, value); }
 

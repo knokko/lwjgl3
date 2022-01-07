@@ -267,7 +267,7 @@ public class XrGraphicsRequirementsOpenGLKHR extends Struct implements NativeRes
     /** Unsafe version of {@link #type(int) type}. */
     public static void ntype(long struct, int value) { UNSAFE.putInt(null, struct + XrGraphicsRequirementsOpenGLKHR.TYPE, value); }
     /** Unsafe version of {@link #next(long) next}. */
-    public static void nnext(long struct, long value) { memPutAddress(struct + XrGraphicsRequirementsOpenGLKHR.NEXT, check(value)); }
+    public static void nnext(long struct, long value) { memPutAddress(struct + XrGraphicsRequirementsOpenGLKHR.NEXT, value); }
     /** Unsafe version of {@link #minApiVersionSupported(long) minApiVersionSupported}. */
     public static void nminApiVersionSupported(long struct, long value) { UNSAFE.putLong(null, struct + XrGraphicsRequirementsOpenGLKHR.MINAPIVERSIONSUPPORTED, value); }
     /** Unsafe version of {@link #maxApiVersionSupported(long) maxApiVersionSupported}. */
