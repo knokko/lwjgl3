@@ -665,86 +665,86 @@ public class HelloOpenXRGL {
     }
 
     private boolean renderLayerOpenXR(MemoryStack stack, long predictedDisplayTime, XrCompositionLayerProjection layer) {
-            XrViewState viewState = XrViewState.calloc(stack)
-                .type$Default();
+        XrViewState viewState = XrViewState.calloc(stack)
+            .type$Default();
 
-            IntBuffer pi = stack.mallocInt(1);
-            check(xrLocateViews(
-                xrSession,
-                XrViewLocateInfo.malloc(stack)
+        IntBuffer pi = stack.mallocInt(1);
+        check(xrLocateViews(
+            xrSession,
+            XrViewLocateInfo.malloc(stack)
+                .type$Default()
+                .next(NULL)
+                .viewConfigurationType(viewConfigType)
+                .displayTime(predictedDisplayTime)
+                .space(xrAppSpace),
+            viewState,
+            pi,
+            views
+        ));
+
+        if ((viewState.viewStateFlags() & XR_VIEW_STATE_POSITION_VALID_BIT) == 0 ||
+            (viewState.viewStateFlags() & XR_VIEW_STATE_ORIENTATION_VALID_BIT) == 0) {
+            return false;  // There is no valid tracking poses for the views.
+        }
+
+        int viewCountOutput = pi.get(0);
+        assert (viewCountOutput == views.capacity());
+        assert (viewCountOutput == viewConfigs.capacity());
+        assert (viewCountOutput == swapchains.length);
+
+        XrCompositionLayerProjectionView.Buffer projectionLayerViews = XRHelper.fill(
+            XrCompositionLayerProjectionView.calloc(viewCountOutput, stack), // Use calloc() since malloc() messes up the `next` field
+            XrCompositionLayerProjectionView.TYPE,
+            XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW
+        );
+
+        // Render view to the appropriate part of the swapchain image.
+        for (int viewIndex = 0; viewIndex < viewCountOutput; viewIndex++) {
+            // Each view has a separate swapchain which is acquired, rendered to, and released.
+            Swapchain viewSwapchain = swapchains[viewIndex];
+
+            check(xrAcquireSwapchainImage(
+                viewSwapchain.handle,
+                XrSwapchainImageAcquireInfo.calloc(stack)
+                    .type$Default(),
+                pi
+            ));
+            int swapchainImageIndex = pi.get(0);
+
+            check(xrWaitSwapchainImage(
+                viewSwapchain.handle,
+                XrSwapchainImageWaitInfo.malloc(stack)
                     .type$Default()
                     .next(NULL)
-                    .viewConfigurationType(viewConfigType)
-                    .displayTime(predictedDisplayTime)
-                    .space(xrAppSpace),
-                viewState,
-                pi,
-                views
+                    .timeout(XR_INFINITE_DURATION)
             ));
 
-            if ((viewState.viewStateFlags() & XR_VIEW_STATE_POSITION_VALID_BIT) == 0 ||
-                (viewState.viewStateFlags() & XR_VIEW_STATE_ORIENTATION_VALID_BIT) == 0) {
-                return false;  // There is no valid tracking poses for the views.
-            }
+            XrCompositionLayerProjectionView projectionLayerView = projectionLayerViews.get(viewIndex)
+                .pose(views.get(viewIndex).pose())
+                .fov(views.get(viewIndex).fov())
+                .subImage(si -> si
+                    .swapchain(viewSwapchain.handle)
+                    .imageRect(rect -> rect
+                        .offset(offset -> offset
+                            .x(0)
+                            .y(0))
+                        .extent(extent -> extent
+                            .width(viewSwapchain.width)
+                            .height(viewSwapchain.height)
+                        )));
 
-            int viewCountOutput = pi.get(0);
-            assert (viewCountOutput == views.capacity());
-            assert (viewCountOutput == viewConfigs.capacity());
-            assert (viewCountOutput == swapchains.length);
+            OpenGLRenderView(projectionLayerView, viewSwapchain.images.get(swapchainImageIndex), viewIndex);
 
-            XrCompositionLayerProjectionView.Buffer projectionLayerViews = XRHelper.fill(
-                XrCompositionLayerProjectionView.calloc(viewCountOutput, stack), // Use calloc() since malloc() messes up the `next` field
-                XrCompositionLayerProjectionView.TYPE,
-                XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW
-            );
+            check(xrReleaseSwapchainImage(
+                viewSwapchain.handle,
+                XrSwapchainImageReleaseInfo.calloc(stack)
+                    .type$Default()
+            ));
+        }
 
-            // Render view to the appropriate part of the swapchain image.
-            for (int viewIndex = 0; viewIndex < viewCountOutput; viewIndex++) {
-                // Each view has a separate swapchain which is acquired, rendered to, and released.
-                Swapchain viewSwapchain = swapchains[viewIndex];
-
-                check(xrAcquireSwapchainImage(
-                    viewSwapchain.handle,
-                    XrSwapchainImageAcquireInfo.calloc(stack)
-                        .type$Default(),
-                    pi
-                ));
-                int swapchainImageIndex = pi.get(0);
-
-                check(xrWaitSwapchainImage(
-                    viewSwapchain.handle,
-                    XrSwapchainImageWaitInfo.malloc(stack)
-                        .type$Default()
-                        .next(NULL)
-                        .timeout(XR_INFINITE_DURATION)
-                ));
-
-                XrCompositionLayerProjectionView projectionLayerView = projectionLayerViews.get(viewIndex)
-                    .pose(views.get(viewIndex).pose())
-                    .fov(views.get(viewIndex).fov())
-                    .subImage(si -> si
-                        .swapchain(viewSwapchain.handle)
-                        .imageRect(rect -> rect
-                            .offset(offset -> offset
-                                .x(0)
-                                .y(0))
-                            .extent(extent -> extent
-                                .width(viewSwapchain.width)
-                                .height(viewSwapchain.height)
-                            )));
-
-                OpenGLRenderView(projectionLayerView, viewSwapchain.images.get(swapchainImageIndex), viewIndex);
-
-                check(xrReleaseSwapchainImage(
-                    viewSwapchain.handle,
-                    XrSwapchainImageReleaseInfo.calloc(stack)
-                        .type$Default()
-                ));
-            }
-
-            layer.space(xrAppSpace);
-            layer.views(projectionLayerViews);
-            return true;
+        layer.space(xrAppSpace);
+        layer.views(projectionLayerViews);
+        return true;
     }
 
     private static Matrix4f modelviewMatrix  = new Matrix4f();
